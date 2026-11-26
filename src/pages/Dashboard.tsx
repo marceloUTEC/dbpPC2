@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { EmptyState, ErrorPanel, Icon, Loading, Status } from '../components'
@@ -10,13 +10,17 @@ export function Dashboard() {
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
   const fetcher = useCallback((signal: AbortSignal) => api.locations(page, signal), [page])
   const { data, loading, error, retry } = useQuery(fetcher)
-  const totalPages = Math.max(1, data?.totalPages ?? 1)
+  const [lastTotalPages, setLastTotalPages] = useState<number | null>(null)
+  const totalPages = data ? Math.max(1, data.totalPages) : lastTotalPages
+  const currentPage = data?.page ?? page
 
   useEffect(() => {
-    if (!loading && !error && data && page > totalPages) {
-      setParams({ page: String(totalPages) }, { replace: true })
+    if (!loading && !error && data) {
+      const pages = Math.max(1, data.totalPages)
+      setLastTotalPages(pages)
+      if (page > pages) setParams({ page: String(pages) }, { replace: true })
     }
-  }, [data, loading, error, page, totalPages, setParams])
+  }, [data, loading, error, page, setParams])
 
   return <>
     <section className="relative overflow-hidden rounded-3xl bg-forest px-6 py-8 text-white sm:px-10 sm:py-10">
@@ -42,11 +46,11 @@ export function Dashboard() {
             <div className="mt-auto border-t border-slate-100 pt-4 text-sm font-semibold text-emerald-800">Ver espacio</div>
           </Link>)}
         </div>}
-        <nav aria-label="Paginación de espacios" className="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:px-6">
-          <p className="text-sm text-slate-600" aria-live="polite">Página <strong className="text-slate-900">{data.page}</strong> de <strong className="text-slate-900">{totalPages}</strong></p>
-          <div className="flex gap-2"><button type="button" className="btn-secondary" disabled={loading || data.page <= 1} onClick={() => setParams({ page: String(data.page - 1) })}>Anterior</button><button type="button" className="btn-secondary" disabled={loading || data.page >= totalPages} onClick={() => setParams({ page: String(data.page + 1) })}>Siguiente</button></div>
-        </nav>
       </>}
+      <nav aria-label="Paginación de espacios" className="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:px-6">
+        <p className="text-sm text-slate-600" aria-live="polite">Página <strong className="text-slate-900">{currentPage}</strong> de <strong className="text-slate-900">{totalPages ?? '…'}</strong></p>
+        <div className="flex gap-2"><button type="button" className="btn-secondary" disabled={loading || !!error || !data || currentPage <= 1} onClick={() => setParams({ page: String(currentPage - 1) })}>Anterior</button><button type="button" className="btn-secondary" disabled={loading || !!error || !data || totalPages === null || currentPage >= totalPages} onClick={() => setParams({ page: String(currentPage + 1) })}>Siguiente</button></div>
+      </nav>
     </section>
     <aside className="mt-8 flex items-start gap-3 rounded-xl bg-emerald-50 px-5 py-4 text-sm leading-relaxed text-emerald-900"><Icon name="info" /><p>¿Ya enviaste un reporte? Revisa su estado en <Link to="/my-tickets" className="font-semibold underline underline-offset-2">Mis solicitudes</Link>.</p></aside>
   </>
