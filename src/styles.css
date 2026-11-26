@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-forest: #153e35;
+  --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  body { @apply m-0 bg-slate-50 text-base text-slate-800 antialiased; }
+  button, a, input, textarea { -webkit-tap-highlight-color: transparent; }
+  button { @apply cursor-pointer; }
+  button:disabled { @apply cursor-not-allowed opacity-45; }
+  a, button, input, textarea { @apply focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700; }
+  ::selection { @apply bg-emerald-200 text-emerald-950; }
+}
+
+@layer components {
+  .btn-primary { @apply rounded-xl bg-forest px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:hover:bg-forest; }
+  .btn-secondary { @apply rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-emerald-400 hover:bg-emerald-50 disabled:hover:border-slate-200 disabled:hover:bg-white; }
+  .field-label { @apply mb-2 block text-sm font-semibold text-slate-700; }
+  .input { @apply block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 disabled:bg-slate-50 disabled:text-slate-500 aria-invalid:border-red-500; }
+  .eyebrow { @apply text-sm font-semibold tracking-[0.14em] text-emerald-700; }
+  .nav-link { @apply flex items-center gap-2 border-b-2 border-transparent pb-4 pt-2 text-sm font-medium text-slate-500 hover:text-emerald-800; }
+  .nav-active { @apply border-emerald-700 text-emerald-800; }
+  .skip-link { @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:p-4; }
+}
+
+.auth-aside::before { content: ""; position: absolute; width: 700px; height: 700px; border: 1px solid #ffffff0c; border-radius: 50%; bottom: -300px; right: -280px; box-shadow: 0 0 0 65px #ffffff04, 0 0 0 130px #ffffff03; }
+.hero-lines { position: absolute; width: 430px; height: 430px; right: -50px; top: -110px; border: 1px solid #ffffff15; border-radius: 50%; box-shadow: 0 0 0 45px #ffffff06, 0 0 0 90px #ffffff05, 0 0 0 135px #ffffff04; pointer-events: none; }
+.campus-art { position: relative; width: 100%; max-width: 400px; height: 150px; }
+.campus-building { position: absolute; bottom: 12px; border: 1px solid #a3d7b36b; border-bottom: 0; border-radius: 5px 5px 0 0; background-color: #285749; background-image: repeating-linear-gradient(90deg, transparent 0 17px, #c7e6ca55 17px 28px, transparent 28px 39px); background-size: calc(100% - 16px) 9px; background-position: 8px 25px; background-repeat: repeat-y; }
+.building-one { left: 35px; width: 105px; height: 95px; transform: skewY(-4deg); }
+.building-two { left: 132px; width: 120px; height: 138px; z-index: 1; background-color: #356b54; }
+.building-three { left: 250px; width: 88px; height: 78px; transform: skewY(4deg); }
+.campus-ground { position: absolute; bottom: 10px; left: 10px; width: 95%; height: 1px; background: #b7ddb568; }
+.campus-tree { position: absolute; bottom: 12px; height: 48px; width: 25px; border-radius: 50% 50% 5px 5px; background: #b9da8199; z-index: 2; }
+.tree-one { left: 12px; }
+.tree-two { left: 340px; height: 63px; width: 30px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
