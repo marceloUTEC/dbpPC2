@@ -22,7 +22,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setExpired(true)
     }
     function onStorage(event: StorageEvent) {
-      if (event.key === TOKEN_KEY || event.key === null) setToken(getToken())
+      if (event.key === TOKEN_KEY || event.key === null) {
+        setToken(getToken())
+        setExpired(false)
+      }
     }
     window.addEventListener(SESSION_EXPIRED, onExpired)
     window.addEventListener('storage', onStorage)
@@ -55,5 +58,5 @@ export function useAuth() {
 
 export function ProtectedRoute() {
   const { token } = useAuth()
-  return token ? <Outlet /> : <Navigate to="/login" replace />
+  return token ? <Outlet key={token} /> : <Navigate to="/login" replace />
 }

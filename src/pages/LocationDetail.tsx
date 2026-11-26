@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { isAxiosError } from 'axios'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { api, apiError } from '../api'
 import { ErrorPanel, FieldError, Icon, Loading, Status, Success } from '../components'
@@ -7,7 +8,7 @@ import { useQuery } from '../useQuery'
 
 export function LocationDetail() {
   const { id = '' } = useParams()
-  if (!/^[1-9]\d*$/.test(id)) return <>
+  if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) return <>
     <Link to="/dashboard" className="mb-7 inline-flex text-sm font-semibold text-emerald-800 underline underline-offset-4">Volver a espacios del campus</Link>
     <ErrorPanel message="El identificador del espacio no es válido." />
   </>
@@ -29,7 +30,7 @@ function LocationContent({ id }: { id: string }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (submitLock.current) return
+    if (submitLock.current || loading || !data || data.status === 'CLOSED') return
     const trimmed = description.trim()
     setSubmitError('')
     setConfirmation('')
@@ -47,7 +48,12 @@ function LocationContent({ id }: { id: string }) {
       setConfirmation(`Solicitud #${ticket.id} enviada. Puedes seguirla en Mis solicitudes.`)
       retry()
     } catch (reason) {
-      setSubmitError(apiError(reason))
+      if (isAxiosError<{ code?: string }>(reason) && (reason.response?.status === 409 || reason.response?.data?.code?.toUpperCase() === 'LOCATION_CLOSED')) {
+        setSubmitError('El espacio está cerrado y no admite solicitudes. Se ha solicitado el detalle actualizado.')
+        retry()
+      } else {
+        setSubmitError(apiError(reason))
+      }
     } finally {
       submitLock.current = false
       setSubmitting(false)
@@ -57,6 +63,7 @@ function LocationContent({ id }: { id: string }) {
   return <>
     <Link to={backTo} className="mb-7 inline-flex rounded text-sm font-semibold text-emerald-800 underline decoration-emerald-200 underline-offset-4">Volver a espacios del campus</Link>
     {confirmation && <div className="mb-6"><Success>{confirmation}</Success></div>}
+    {submitError && <div className="mb-6"><ErrorPanel message={submitError} /></div>}
     {loading ? <Loading label="Actualizando el detalle del espacio…" /> : error ? <ErrorPanel message={error} onRetry={retry} /> : data && <div className="grid items-start gap-6 lg:grid-cols-[1.15fr_1fr]">
       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
         <div className="detail-banner relative flex h-44 items-center justify-center overflow-hidden bg-forest"><div className="hero-lines" aria-hidden="true" /><Icon name="campus" className="relative h-20 w-20 text-lime-200" /></div>
@@ -75,7 +82,6 @@ function LocationContent({ id }: { id: string }) {
         <h2 id="report-heading" className="text-2xl font-semibold tracking-tight text-slate-900">¿Algo necesita atención?</h2>
         <p className="mb-6 mt-3 leading-relaxed text-slate-500">Cuéntanos qué ocurre en este espacio. El equipo de soporte recibirá tu solicitud.</p>
         {data.status === 'CLOSED' && <div className="mb-5"><ErrorPanel message="Este espacio tiene la atención cerrada y no recibe nuevas solicitudes por ahora." /></div>}
-        {submitError && <div className="mb-5"><ErrorPanel message={submitError} /></div>}
         <form onSubmit={submit} noValidate aria-busy={submitting}>
           <label className="field-label" htmlFor="description">Descripción del problema</label>
           <textarea id="description" name="description" className="input min-h-40 resize-y" rows={5} placeholder="Por ejemplo: la lámpara junto a la puerta no enciende." value={description} onChange={(event) => { setDescription(event.target.value); setFieldError(''); setSubmitError('') }} disabled={submitting || data.status === 'CLOSED'} required aria-invalid={!!fieldError} aria-describedby={`description-help${fieldError ? ' description-error' : ''}`} />
